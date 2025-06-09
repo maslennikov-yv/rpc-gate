@@ -78,7 +78,7 @@ check-docker-compose:
 
 # Настройка проекта
 .PHONY: setup
-setup: deps make-scripts-executable
+setup: deps make-scripts-executable install-lint
 	@echo "      🔧 Настройка проекта..."
 	@mkdir -p $(BIN_DIR)
 	@$(SCRIPTS_DIR)/setup-deps.sh
@@ -261,7 +261,7 @@ test-integration: check-and-fix-deps check-test-deps make-scripts-executable cle
 # Интеграционные тесты в тихом режиме
 .PHONY: test-integration-quiet
 test-integration-quiet: check-and-fix-deps check-test-deps make-scripts-executable clean-test-env
-	@echo "      🧪 Запуск интеграционных тестов (тихий режим)..."
+	@echo "      🧪 Запуск интеграционных тестов (тихом режиме)..."
 	@$(SCRIPTS_DIR)/run-integration-tests.sh --quiet $(if $(filter true,$(BAIL)),--bail,)
 
 # Безопасный запуск тестов
@@ -276,9 +276,20 @@ test-comprehensive: check-and-fix-deps check-test-deps make-scripts-executable c
 	@echo "      🧪 Запуск комплексного набора тестов..."
 	@$(SCRIPTS_DIR)/run-comprehensive-tests.sh $(if $(filter true,$(BAIL)),--bail,)
 
+# Установка golangci-lint
+.PHONY: install-lint
+install-lint:
+	@echo "      📥 Установка golangci-lint..."
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "      🔧 Установка golangci-lint..."; \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.55.2; \
+	else \
+		echo "      ✅ golangci-lint уже установлен"; \
+	fi
+
 # Линтинг
 .PHONY: lint
-lint: check-and-fix-deps
+lint: check-and-fix-deps install-lint
 	@echo "      🔍 Запуск линтера..."
 	@golangci-lint run ./...
 
@@ -429,6 +440,66 @@ docker-test: check-and-fix-deps make-scripts-executable
 	@export PROJECT_NAME=$(PROJECT_NAME) && \
 	$(SCRIPTS_DIR)/docker-test.sh
 
+# ==================== DOCUMENTATION COMMANDS ====================
+
+# Генерация документации
+.PHONY: docs
+docs: check-and-fix-deps
+	@echo "      📚 Генерация документации..."
+	@mkdir -p docs
+	@$(GO) doc -all ./pkg/... > docs/api.md
+	@echo "      ✅ Документация сгенерирована в docs/api.md"
+
+# Запуск простого HTTP сервера для документации
+.PHONY: docs-serve
+docs-serve: docs-html docs-css
+	@echo "      🌐 Запуск HTTP сервера для документации..."
+	@echo "      🚀 Документация доступна по адресу: http://localhost:8000"
+	@echo "      📚 Нажмите Ctrl+C для остановки"
+	@cd docs && python3 -m http.server 8000 2>/dev/null || python -m SimpleHTTPServer 8000
+
+# Генерация README для каждого пакета
+.PHONY: docs-readme
+docs-readme: check-and-fix-deps
+	@echo "      📝 Генерация README файлов для пакетов..."
+	@for dir in $$(find pkg -type d -mindepth 1); do \
+		if [ -n "$$(find $$dir -maxdepth 1 -name '*.go' -not -name '*_test.go')" ]; then \
+			echo "      📄 Создание README для $$dir..."; \
+			pkg_name=$$(basename $$dir); \
+			echo "# Package $$pkg_name" > $$dir/README.md; \
+			echo "" >> $$dir/README.md; \
+			echo "## Описание" >> $$dir/README.md; \
+			echo "" >> $$dir/README.md; \
+			go doc -all ./$$dir 2>/dev/null | head -20 >> $$dir/README.md || echo "Документация пакета $$pkg_name" >> $$dir/README.md; \
+			echo "" >> $$dir/README.md; \
+			echo "## Использование" >> $$dir/README.md; \
+			echo "" >> $$dir/README.md; \
+			echo '\`\`\`go' >> $$dir/README.md; \
+			echo "import \"streaming-server/$$dir\"" >> $$dir/README.md; \
+			echo '\`\`\`' >> $$dir/README.md; \
+		fi; \
+	done
+	@echo "      ✅ README файлы созданы для всех пакетов"
+
+# Генерация полной документации
+.PHONY: docs-full
+docs-full: docs docs-html docs-css docs-readme
+	@echo "      📚 Полная документация сгенерирована!"
+	@echo "      📁 Файлы документации:"
+	@echo "         - docs/api.md (Markdown)"
+	@echo "         - docs/api.html (HTML)"
+	@echo "         - docs/style.css (CSS стили)"
+	@echo "         - pkg/*/README.md (README для каждого пакета)"
+	@echo "      🌐 Запустите 'make docs-serve' для просмотра в браузере"
+
+# Очистка документации
+.PHONY: docs-clean
+docs-clean:
+	@echo "      🧹 Очистка документации..."
+	@rm -rf docs/
+	@find pkg -name "README.md" -delete
+	@echo "      ✅ Документация очищена"
+
 # Помощь
 .PHONY: help
 help:
@@ -483,9 +554,12 @@ help:
 	@echo "  🧹 Очистка и обслуживание:"
 	@echo "  make clean              - Очистка"
 	@echo "  make clean-test-env     - Очистка тестового окружения"
+	@echo "  make install-lint       - Установка golangci-lint"
 	@echo "  make lint               - Запуск линтера"
 	@echo "  make fmt                - Форматирование кода"
 	@echo "  make fix-checksums      - Исправление контрольных сумм"
 	@echo ""
 	@echo "  📚 Документация:"
+	@echo "  make docs               - Генерация Markdown документации"
+	@echo "  make docs-serve         - Запуск HTTP сервера для документации"
 	@echo "  make help               - Показать эту справку"
