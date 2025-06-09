@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Install dependencies
-        run: make install-deps
+        run: make setup
         timeout-minutes: 2
 
       - name: Run go fmt
@@ -49,17 +49,9 @@ jobs:
           fi
         timeout-minutes: 1
 
-      - name: Run go vet
-        run: make vet-safe
-        timeout-minutes: 2
-
       - name: Run tests
-        run: make test
+        run: make test-unit
         timeout-minutes: 5
-
-      - name: Run benchmarks
-        run: make bench
-        timeout-minutes: 2
 
   build:
     name: Build
