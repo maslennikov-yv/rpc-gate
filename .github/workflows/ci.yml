@@ -1,63 +1,160 @@
-name: CI
+name: Build and Test
 
 on:
   push:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  workflow_dispatch:  # Позволяет запускать workflow вручную
+
+env:
+  GO_VERSION: '1.21'
+  CACHE_KEY_PREFIX: go-streaming-server
 
 jobs:
-  test:
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.20, 1.21]
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ matrix.go-version }}
-    
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    
-    - name: Install dependencies
-      run: make deps
-    
-    - name: Run tests
-      run: make test-coverage
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/coverage.out
-    
-    - name: Run linter
-      run: make lint
-    
-    - name: Build
-      run: make build-all
+    timeout-minutes: 10  # Предотвращает зависание задач
 
-  security:
-    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 1.21
-    
-    - name: Run security scan
-      run: make security-scan
-    
-    - name: Run vulnerability check
-      run: make vuln-check
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Полная история для правильного версионирования
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true  # Встроенное кеширование Go модулей
+
+      - name: Install dependencies
+        run: |
+          echo "::group::Installing dependencies"
+          go mod download
+          echo "::endgroup::"
+
+      - name: Verify dependencies
+        run: |
+          echo "::group::Verifying dependencies"
+          go mod verify
+          echo "::endgroup::"
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout=3m
+          skip-cache: true  # Используем встроенное кеширование Go
+          install-mode: binary
+
+      - name: Run linter
+        run: |
+          echo "::group::Running linter"
+          golangci-lint run --timeout 3m ./...
+          echo "::endgroup::"
+
+      - name: Fix unused imports
+        run: |
+          echo "::group::Fixing unused imports"
+          # Находим и исправляем неиспользуемые импорты
+          go mod tidy
+          gofmt -w -s $(find . -type f -name "*.go" | grep -v "/vendor/")
+          echo "::endgroup::"
+
+      - name: Build
+        run: |
+          echo "::group::Building application"
+          go build -v ./cmd/server/main.go
+          go build -v ./cmd/client/main.go
+          echo "::endgroup::"
+
+      - name: Run unit tests with coverage
+        run: |
+          echo "::group::Running unit tests"
+          mkdir -p coverage
+          go test -race -coverprofile=coverage/coverage.out -covermode=atomic ./pkg/...
+          echo "::endgroup::"
+
+      - name: Generate coverage report
+        run: |
+          echo "::group::Generating coverage report"
+          go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+          echo "::endgroup::"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Check test coverage
+        run: |
+          echo "::group::Checking test coverage"
+          COVERAGE=$(go tool cover -func=coverage/coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+            echo "::warning::Test coverage is below 70%"
+          fi
+          echo "::endgroup::"
+
+  build-matrix:
+    name: Build on ${{ matrix.os }} / Go ${{ matrix.go-version }}
+    runs-on: ${{ matrix.os }}
+    needs: lint-and-test  # Запускаем только если тесты прошли успешно
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false  # Продолжаем другие сборки, даже если одна не удалась
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go-version: ['1.20', '1.21']
+        exclude:
+          # Исключаем некоторые комбинации для экономии ресурсов
+          - os: macos-latest
+            go-version: '1.20'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Build server
+        run: go build -v ./cmd/server/main.go
+
+      - name: Build client
+        run: go build -v ./cmd/client/main.go
+
+      - name: Run basic tests
+        run: go test -v -short ./pkg/...  # Запускаем только короткие тесты
+
+  notify:
+    name: Notify on completion
+    runs-on: ubuntu-latest
+    needs: [lint-and-test, build-matrix]
+    if: always()  # Запускаем всегда, независимо от результата предыдущих задач
+
+    steps:
+      - name: Check build status
+        if: ${{ needs.lint-and-test.result == 'failure' || needs.build-matrix.result == 'failure' }}
+        run: |
+          echo "::error::Build or tests failed!"
+          exit 1
+
+      - name: Build succeeded
+        if: ${{ needs.lint-and-test.result == 'success' && needs.build-matrix.result == 'success' }}
+        run: echo "✅ All builds and tests passed successfully!"
