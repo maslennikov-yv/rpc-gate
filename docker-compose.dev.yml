@@ -1,0 +1,40 @@
+version: '3.8'
+
+# Development override - extends docker-compose.yml
+services:
+  streaming-server:
+    environment:
+      - LOG_LEVEL=debug
+      - DEBUG=true
+      - ENVIRONMENT=development
+    volumes:
+      - ./:/app/src:ro  # Mount source for development
+      - ./logs:/app/logs
+
+  kafka-ui:
+    ports:
+      - "8090:8080"  # Expose Kafka UI in development
+    profiles: []  # Remove profile restriction for dev
+
+  # Development client for testing
+  streaming-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: streaming-server-client
+    depends_on:
+      streaming-server:
+        condition: service_healthy
+    environment:
+      - SERVER_HTTP=http://streaming-server:8080
+      - SERVER_HTTPS=https://streaming-server:8443
+      - SERVER_WS=ws://streaming-server:8082
+      - SERVER_WSS=wss://streaming-server:8445
+      - SERVER_TCP=streaming-server:8081
+      - SERVER_TLS=streaming-server:8444
+    networks:
+      - internal-network
+    profiles:
+      - client
+    stdin_open: true
+    tty: true

@@ -1,0 +1,27 @@
+# Test client Dockerfile for running integration tests
+FROM golang:1.21-alpine
+
+# Install test dependencies
+RUN apk add --no-cache git ca-certificates tzdata curl netcat-openbsd jq
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Install test tools
+RUN go install github.com/onsi/ginkgo/v2/ginkgo@latest
+RUN go install github.com/onsi/gomega/...@latest
+
+# Create test results directory
+RUN mkdir -p /app/test-results
+
+# Default command
+CMD ["tail", "-f", "/dev/null"]

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Load balancer for testing
+  nginx-lb:
+    image: nginx:alpine
+    container_name: nginx-load-balancer
+    ports:
+      - "8080:80"
+    volumes:
+      - ./test/config/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - streaming-server-1
+      - streaming-server-2
+      - streaming-server-3
+    networks:
+      - load-test-network
+
+  # Multiple server instances for load testing
+  streaming-server-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: streaming-server-1
+    environment:
+      - HTTP_ADDR=:8080
+      - TCP_ADDR=:8081
+      - WS_ADDR=:8082
+      - LOG_LEVEL=warn
+      - INSTANCE_ID=server-1
+    networks:
+      - load-test-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  streaming-server-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: streaming-server-2
+    environment:
+      - HTTP_ADDR=:8080
+      - TCP_ADDR=:8081
+      - WS_ADDR=:8082
+      - LOG_LEVEL=warn
+      - INSTANCE_ID=server-2
+    networks:
+      - load-test-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  streaming-server-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: streaming-server-3
+    environment:
+      - HTTP_ADDR=:8080
+      - TCP_ADDR=:8081
+      - WS_ADDR=:8082
+      - LOG_LEVEL=warn
+      - INSTANCE_ID=server-3
+    networks:
+      - load-test-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Load test client
+  load-test-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-client
+    container_name: load-test-client
+    depends_on:
+      nginx-lb:
+        condition: service_started
+      streaming-server-1:
+        condition: service_healthy
+      streaming-server-2:
+        condition: service_healthy
+      streaming-server-3:
+        condition: service_healthy
+    environment:
+      - LOAD_BALANCER_URL=http://nginx-lb
+      - TEST_DURATION=60s
+      - CONCURRENT_USERS=100
+      - REQUESTS_PER_USER=1000
+    volumes:
+      - ./test-results:/app/test-results
+    networks:
+      - load-test-network
+    command: ["sleep", "infinity"]
+
+networks:
+  load-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
