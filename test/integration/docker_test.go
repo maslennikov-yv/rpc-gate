@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"streaming-server/pkg/types"
 	"streaming-server/pkg/testutil"
+	"streaming-server/pkg/types"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -29,18 +29,18 @@ type DockerIntegrationTestSuite struct {
 	suite.Suite
 	dockerAvailable bool
 	quietMode       bool
-	testServerHTTP   string
-	testServerWS     string
-	testServerTCP    string
-	loadServerHTTP   string
-	loadServerWS     string
-	loadServerTCP    string
-	perfServerHTTP   string
-	perfServerWS     string
-	perfServerTCP    string
-	httpClient       *http.Client
-	testResults      map[string]interface{}
-	mu               sync.Mutex
+	testServerHTTP  string
+	testServerWS    string
+	testServerTCP   string
+	loadServerHTTP  string
+	loadServerWS    string
+	loadServerTCP   string
+	perfServerHTTP  string
+	perfServerWS    string
+	perfServerTCP   string
+	httpClient      *http.Client
+	testResults     map[string]interface{}
+	mu              sync.Mutex
 }
 
 // SetupSuite initializes the Docker test suite
@@ -61,11 +61,11 @@ func (suite *DockerIntegrationTestSuite) SetupSuite() {
 	suite.testServerHTTP = getEnvOrDefault("TEST_SERVER_HTTP", "http://localhost:18080")
 	suite.testServerWS = getEnvOrDefault("TEST_SERVER_WS", "ws://localhost:18082")
 	suite.testServerTCP = getEnvOrDefault("TEST_SERVER_TCP", "localhost:18081")
-	
+
 	suite.loadServerHTTP = getEnvOrDefault("LOAD_SERVER_HTTP", "http://localhost:19080")
 	suite.loadServerWS = getEnvOrDefault("LOAD_SERVER_WS", "ws://localhost:19082")
 	suite.loadServerTCP = getEnvOrDefault("LOAD_SERVER_TCP", "localhost:19081")
-	
+
 	suite.perfServerHTTP = getEnvOrDefault("PERF_SERVER_HTTP", "http://localhost:20080")
 	suite.perfServerWS = getEnvOrDefault("PERF_SERVER_WS", "ws://localhost:20082")
 	suite.perfServerTCP = getEnvOrDefault("PERF_SERVER_TCP", "localhost:20081")
@@ -133,10 +133,10 @@ func (suite *DockerIntegrationTestSuite) TestDocker_BasicFunctionality() {
 	section.Start()
 
 	section.Status("Testing Docker basic functionality...")
-	
+
 	// Simulate Docker test
 	// In real implementation, this would test actual Docker containers
-	
+
 	section.Status("Docker basic functionality test completed")
 	section.End()
 }
@@ -169,56 +169,56 @@ func (suite *DockerIntegrationTestSuite) TestBasicFunctionality() {
 
 // Test load balancing and distribution
 func (suite *DockerIntegrationTestSuite) TestLoadDistribution() {
-    const numRequests = 100
-    const numWorkers = 10
+	const numRequests = 100
+	const numWorkers = 10
 
-    // Только для этого теста включаем тихий режим
-    localQuietMode := true
+	// Только для этого теста включаем тихий режим
+	localQuietMode := true
 
-    // Создаем секцию с тихим режимом
-    section := testutil.NewSectionReporter("Load Distribution Test")
-    section.SetQuietMode(localQuietMode)
-    section.Start()
+	// Создаем секцию с тихим режимом
+	section := testutil.NewSectionReporter("Load Distribution Test")
+	section.SetQuietMode(localQuietMode)
+	section.Start()
 
-    servers := []string{
-        suite.testServerHTTP,
-        suite.loadServerHTTP,
-        suite.perfServerHTTP,
-    }
+	servers := []string{
+		suite.testServerHTTP,
+		suite.loadServerHTTP,
+		suite.perfServerHTTP,
+	}
 
-    var wg sync.WaitGroup
-    results := make(chan map[string]interface{}, numRequests)
+	var wg sync.WaitGroup
+	results := make(chan map[string]interface{}, numRequests)
 
-    section.Status("Starting %d workers for %d requests", numWorkers, numRequests)
+	section.Status("Starting %d workers for %d requests", numWorkers, numRequests)
 
-    for i := 0; i < numWorkers; i++ {
-        wg.Add(1)
-        go func(workerID int) {
-            defer wg.Done()
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
 
-            for j := 0; j < numRequests/numWorkers; j++ {
-                serverURL := servers[j%len(servers)]
-                
-                start := time.Now()
-                request := types.JSONRPCRequest{
-                    JSONRPC: "2.0",
-                    Method:  "calculate",
-                    Params:  json.RawMessage(`{"operation": "add", "a": 1, "b": 1}`),
-                    ID:      fmt.Sprintf("load-test-%d-%d", workerID, j),
-                }
+			for j := 0; j < numRequests/numWorkers; j++ {
+				serverURL := servers[j%len(servers)]
 
-                response := suite.makeHTTPRequest(serverURL, request)
-                duration := time.Since(start)
+				start := time.Now()
+				request := types.JSONRPCRequest{
+					JSONRPC: "2.0",
+					Method:  "calculate",
+					Params:  json.RawMessage(`{"operation": "add", "a": 1, "b": 1}`),
+					ID:      fmt.Sprintf("load-test-%d-%d", workerID, j),
+				}
 
-                results <- map[string]interface{}{
-                    "server":   serverURL,
-                    "success":  response.Error == nil,
-                    "duration": duration.Milliseconds(),
-                    "worker":   workerID,
-                }
-            }
-        }(i)
-    }
+				response := suite.makeHTTPRequest(serverURL, request)
+				duration := time.Since(start)
+
+				results <- map[string]interface{}{
+					"server":   serverURL,
+					"success":  response.Error == nil,
+					"duration": duration.Milliseconds(),
+					"worker":   workerID,
+				}
+			}
+		}(i)
+	}
 
 	wg.Wait()
 	close(results)
@@ -233,7 +233,7 @@ func (suite *DockerIntegrationTestSuite) TestLoadDistribution() {
 		if result["success"].(bool) {
 			successCount++
 		}
-		
+
 		server := result["server"].(string)
 		duration := result["duration"].(int64)
 		serverStats[server] = append(serverStats[server], duration)
@@ -242,10 +242,10 @@ func (suite *DockerIntegrationTestSuite) TestLoadDistribution() {
 	// Verify load distribution
 	suite.mu.Lock()
 	suite.testResults["load_distribution"] = map[string]interface{}{
-		"total_requests":  totalCount,
-		"success_count":   successCount,
-		"success_rate":    float64(successCount) / float64(totalCount),
-		"server_stats":    serverStats,
+		"total_requests": totalCount,
+		"success_count":  successCount,
+		"success_rate":   float64(successCount) / float64(totalCount),
+		"server_stats":   serverStats,
 	}
 	suite.mu.Unlock()
 
@@ -391,10 +391,10 @@ func (suite *DockerIntegrationTestSuite) TestDataSerialization() {
 			// Verify data integrity
 			result, ok := response.Result.(map[string]interface{})
 			require.True(t, ok)
-			
+
 			echoedData, ok := result["echo"]
 			require.True(t, ok)
-			
+
 			// For simple verification, check that we got data back
 			assert.NotNil(t, echoedData)
 		})
@@ -491,29 +491,29 @@ func (suite *DockerIntegrationTestSuite) TestNetworkResilience() {
 
 // Test concurrent connections across multiple containers
 func (suite *DockerIntegrationTestSuite) TestConcurrentConnections() {
-    const numConnections = 50
-    const requestsPerConnection = 10
+	const numConnections = 50
+	const requestsPerConnection = 10
 
-    // Только для этого теста включаем тихий режим
-    localQuietMode := true
+	// Только для этого теста включаем тихий режим
+	localQuietMode := true
 
-    // Создаем секцию с тихим режимом
-    section := testutil.NewSectionReporter("Concurrent Connections Test")
-    section.SetQuietMode(localQuietMode)
-    section.Start()
-    defer section.End()
+	// Создаем секцию с тихим режимом
+	section := testutil.NewSectionReporter("Concurrent Connections Test")
+	section.SetQuietMode(localQuietMode)
+	section.Start()
+	defer section.End()
 
-    servers := []string{
-        suite.testServerHTTP,
-        suite.loadServerHTTP,
-        suite.perfServerHTTP,
-    }
+	servers := []string{
+		suite.testServerHTTP,
+		suite.loadServerHTTP,
+		suite.perfServerHTTP,
+	}
 
-    section.Status("Testing %d concurrent connections with %d requests each", 
-        numConnections, requestsPerConnection)
+	section.Status("Testing %d concurrent connections with %d requests each",
+		numConnections, requestsPerConnection)
 
-    var wg sync.WaitGroup
-    results := make(chan bool, numConnections*requestsPerConnection*len(servers))
+	var wg sync.WaitGroup
+	results := make(chan bool, numConnections*requestsPerConnection*len(servers))
 
 	for _, server := range servers {
 		for i := 0; i < numConnections; i++ {
@@ -551,7 +551,7 @@ func (suite *DockerIntegrationTestSuite) TestConcurrentConnections() {
 	}
 
 	successRate := float64(successCount) / float64(totalCount)
-	
+
 	suite.mu.Lock()
 	suite.testResults["concurrent_connections"] = map[string]interface{}{
 		"total_requests": totalCount,

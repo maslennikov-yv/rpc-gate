@@ -14,8 +14,8 @@ import (
 // TestMiddleware_RequestValidation validates middleware request validation
 func (suite *IntegrationTestSuite) TestMiddleware_RequestValidation() {
 	validationTests := []struct {
-		name     string
-		request  types.JSONRPCRequest
+		name       string
+		request    types.JSONRPCRequest
 		shouldPass bool
 	}{
 		{
@@ -60,7 +60,7 @@ func (suite *IntegrationTestSuite) TestMiddleware_RequestValidation() {
 	for _, test := range validationTests {
 		suite.Run(test.name, func() {
 			response := suite.makeHTTPRequest(test.request)
-			
+
 			if test.shouldPass {
 				assert.NotNil(suite.T(), response)
 				assert.Nil(suite.T(), response.Error, "Valid request should not have error")
@@ -110,7 +110,7 @@ func (suite *IntegrationTestSuite) TestMiddleware_Logging() {
 	for _, req := range requests {
 		suite.Run(req.name, func() {
 			response := suite.makeHTTPRequest(req.request)
-			
+
 			// For notifications, response should be nil
 			if req.request.IsNotification() {
 				assert.Nil(suite.T(), response)
@@ -126,7 +126,7 @@ func (suite *IntegrationTestSuite) TestMiddleware_Logging() {
 func (suite *IntegrationTestSuite) TestMiddleware_ChainExecution() {
 	// Test that middleware chain executes in proper order by making requests
 	// and verifying the final response contains expected data
-	
+
 	request := types.JSONRPCRequest{
 		JSONRPC: "2.0",
 		Method:  "echo",
@@ -135,19 +135,19 @@ func (suite *IntegrationTestSuite) TestMiddleware_ChainExecution() {
 	}
 
 	response := suite.makeHTTPRequest(request)
-	
+
 	// Verify the request went through the full middleware chain
 	assert.NotNil(suite.T(), response)
 	assert.Nil(suite.T(), response.Error)
 	assert.Equal(suite.T(), "chain-test", response.ID)
-	
+
 	// Verify the response structure indicates middleware processing
 	result, ok := response.Result.(map[string]interface{})
 	require.True(suite.T(), ok)
-	
+
 	// The echo handler should return the message and timestamp
 	assert.Contains(suite.T(), result, "timestamp")
-	
+
 	echo, ok := result["echo"].(map[string]interface{})
 	require.True(suite.T(), ok)
 	assert.Equal(suite.T(), "chain test", echo["message"])
@@ -157,16 +157,16 @@ func (suite *IntegrationTestSuite) TestMiddleware_ChainExecution() {
 func (suite *IntegrationTestSuite) TestMiddleware_ConcurrentProcessing() {
 	const numWorkers = 10
 	const requestsPerWorker = 3
-	
+
 	var wg sync.WaitGroup
 	results := make(chan *types.JSONRPCResponse, numWorkers*requestsPerWorker)
-	
+
 	// Launch concurrent requests
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < requestsPerWorker; j++ {
 				request := types.JSONRPCRequest{
 					JSONRPC: "2.0",
@@ -174,16 +174,16 @@ func (suite *IntegrationTestSuite) TestMiddleware_ConcurrentProcessing() {
 					Params:  json.RawMessage(`{"operation": "multiply", "a": 3, "b": 4}`),
 					ID:      fmt.Sprintf("middleware-concurrent-%d-%d", workerID, j),
 				}
-				
+
 				response := suite.makeHTTPRequest(request)
 				results <- response
 			}
 		}(i)
 	}
-	
+
 	wg.Wait()
 	close(results)
-	
+
 	// Validate all responses
 	successCount := 0
 	for response := range results {
@@ -196,8 +196,8 @@ func (suite *IntegrationTestSuite) TestMiddleware_ConcurrentProcessing() {
 			}
 		}
 	}
-	
-	assert.Equal(suite.T(), numWorkers*requestsPerWorker, successCount, 
+
+	assert.Equal(suite.T(), numWorkers*requestsPerWorker, successCount,
 		"All concurrent requests should succeed through middleware")
 }
 
@@ -205,9 +205,9 @@ func (suite *IntegrationTestSuite) TestMiddleware_ConcurrentProcessing() {
 func (suite *IntegrationTestSuite) TestMiddleware_ErrorHandling() {
 	// Test that middleware properly handles and propagates errors
 	errorRequests := []struct {
-		name           string
-		request        types.JSONRPCRequest
-		expectedError  int
+		name          string
+		request       types.JSONRPCRequest
+		expectedError int
 	}{
 		{
 			name: "Handler Error",
@@ -238,11 +238,11 @@ func (suite *IntegrationTestSuite) TestMiddleware_ErrorHandling() {
 			expectedError: -32602, // Invalid params
 		},
 	}
-	
+
 	for _, errorReq := range errorRequests {
 		suite.Run(errorReq.name, func() {
 			response := suite.makeHTTPRequest(errorReq.request)
-			
+
 			assert.NotNil(suite.T(), response)
 			assert.NotNil(suite.T(), response.Error)
 			assert.Equal(suite.T(), errorReq.request.ID, response.ID)
@@ -259,17 +259,17 @@ func (suite *IntegrationTestSuite) TestMiddleware_ContextPropagation() {
 		Method:  "status",
 		ID:      "context-test",
 	}
-	
+
 	response := suite.makeHTTPRequest(request)
-	
+
 	assert.NotNil(suite.T(), response)
 	assert.Nil(suite.T(), response.Error)
 	assert.Equal(suite.T(), "context-test", response.ID)
-	
+
 	// Verify the status response contains expected server information
 	result, ok := response.Result.(map[string]interface{})
 	require.True(suite.T(), ok)
-	
+
 	assert.Contains(suite.T(), result, "status")
 	assert.Contains(suite.T(), result, "timestamp")
 	assert.Contains(suite.T(), result, "version")

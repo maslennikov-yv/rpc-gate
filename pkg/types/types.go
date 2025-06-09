@@ -49,7 +49,7 @@ const (
 	MethodNotFound = -32601 // Метод не найден
 	InvalidParams  = -32602 // Неверные параметры
 	InternalError  = -32603 // Внутренняя ошибка
-	
+
 	// Коды ошибок сервера (зарезервированы для реализации)
 	ServerErrorStart = -32099
 	ServerErrorEnd   = -32000
@@ -108,18 +108,18 @@ func NewInternalError(data interface{}) *RPCError {
 
 // RequestContext содержит данные и метаданные, специфичные для запроса
 type RequestContext struct {
-	ctx           context.Context
-	RequestID     string
-	Transport     string
-	RemoteAddr    string
-	StartTime     time.Time
-	UserAgent     string
-	Headers       map[string]string
-	Data          map[string]interface{}
-	Span          interface{} // Используем interface{} чтобы избежать зависимости импорта
-	HTTPRequest   *http.Request
+	ctx             context.Context
+	RequestID       string
+	Transport       string
+	RemoteAddr      string
+	StartTime       time.Time
+	UserAgent       string
+	Headers         map[string]string
+	Data            map[string]interface{}
+	Span            interface{} // Используем interface{} чтобы избежать зависимости импорта
+	HTTPRequest     *http.Request
 	SelectedHandler string
-	clock         Clock // Внедряемые часы для тестирования
+	clock           Clock // Внедряемые часы для тестирования
 }
 
 // NewRequestContext создает новый контекст запроса

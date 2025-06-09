@@ -159,9 +159,9 @@ func convertToFloat64(v interface{}) (float64, bool) {
 // StatusHandler returns server status information
 func StatusHandler(req *types.JSONRPCRequest, ctx *types.RequestContext) (*types.JSONRPCResponse, error) {
 	now := time.Now()
-	
+
 	status := map[string]interface{}{
-		"status":     "healthy", // Изменено с "healthy" на "ok" для соответствия тестам
+		"status":     "healthy",                // Изменено с "healthy" на "ok" для соответствия тестам
 		"timestamp":  now.Format(time.RFC3339), // Добавлено поле timestamp
 		"transport":  ctx.Transport,
 		"request_id": ctx.RequestID,
@@ -179,14 +179,14 @@ func StatusHandler(req *types.JSONRPCRequest, ctx *types.RequestContext) (*types
 // TimeHandler returns current server time
 func TimeHandler(req *types.JSONRPCRequest, ctx *types.RequestContext) (*types.JSONRPCResponse, error) {
 	now := time.Now()
-	
+
 	result := map[string]interface{}{
-		"time":       now.Format(time.RFC3339), // Добавить это поле
-		"timestamp":  now.Format(time.RFC3339),
-		"formatted":  now.Format("2006-01-02 15:04:05 MST"),
-		"unix":       now.Unix(),
-		"timezone":   "UTC",
-		"request_id": ctx.RequestID,
+		"time":        now.Format(time.RFC3339), // Добавить это поле
+		"timestamp":   now.Format(time.RFC3339),
+		"formatted":   now.Format("2006-01-02 15:04:05 MST"),
+		"unix":        now.Unix(),
+		"timezone":    "UTC",
+		"request_id":  ctx.RequestID,
 		"server_time": now,
 	}
 

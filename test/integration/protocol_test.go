@@ -79,7 +79,7 @@ func (suite *IntegrationTestSuite) TestProtocol_HTTPSSupport() {
 
 	// Extract HTTPS port from config
 	httpsURL := fmt.Sprintf("https://localhost%s", suite.config.HTTPSAddr)
-	
+
 	// Send HTTPS request
 	jsonData, err := json.Marshal(request)
 	require.NoError(suite.T(), err)
@@ -122,7 +122,7 @@ func (suite *IntegrationTestSuite) TestProtocol_WSSSupport() {
 
 	// Extract WSS port from config
 	wssURL := fmt.Sprintf("wss://localhost%s", suite.config.WSSAddr)
-	
+
 	// Connect to WSS
 	dialer := websocket.Dialer{
 		TLSClientConfig: &tls.Config{
@@ -171,7 +171,7 @@ func (suite *IntegrationTestSuite) TestProtocol_TLSSupport() {
 
 	// Extract TLS port from config
 	tlsAddr := fmt.Sprintf("localhost%s", suite.config.TLSAddr)
-	
+
 	// Connect to TLS server
 	conn, err := tls.Dial("tcp", tlsAddr, &tls.Config{
 		InsecureSkipVerify: true,

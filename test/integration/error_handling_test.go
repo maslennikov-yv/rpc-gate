@@ -139,7 +139,7 @@ func (suite *IntegrationTestSuite) TestErrorHandling_Timeout() {
 
 	// Create a client with a very short timeout
 	shortTimeoutClient := &http.Client{
-		Timeout: 500 * time.Millisecond,
+		Timeout:   500 * time.Millisecond,
 		Transport: suite.httpClient.Transport,
 	}
 

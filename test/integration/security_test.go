@@ -44,7 +44,7 @@ func (suite *IntegrationTestSuite) TestSecurity_HeaderInjection() {
 			req.Header.Set(header.name, header.value)
 
 			resp, err := suite.httpClient.Do(req)
-			
+
 			// Go's HTTP client prevents header injection by rejecting invalid headers
 			// This is actually good security behavior
 			if err != nil {
@@ -178,7 +178,7 @@ func (suite *IntegrationTestSuite) TestSecurity_CORS() {
 func (suite *IntegrationTestSuite) TestSecurity_PayloadSize() {
 	// Test with extremely large payload
 	largeMessage := strings.Repeat("A", 10*1024*1024) // 10MB
-	
+
 	request := types.JSONRPCRequest{
 		JSONRPC: "2.0",
 		Method:  "echo",
@@ -194,7 +194,7 @@ func (suite *IntegrationTestSuite) TestSecurity_PayloadSize() {
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := suite.httpClient.Do(req)
-	
+
 	// Server should either handle it gracefully or reject it
 	if err != nil {
 		// Connection might be rejected due to size limits
@@ -211,9 +211,9 @@ func (suite *IntegrationTestSuite) TestSecurity_RateLimiting() {
 	// Send multiple rapid requests to test rate limiting
 	const numRequests = 50
 	const concurrency = 10
-	
+
 	results := make(chan bool, numRequests)
-	
+
 	for i := 0; i < concurrency; i++ {
 		go func() {
 			for j := 0; j < numRequests/concurrency; j++ {
@@ -223,20 +223,20 @@ func (suite *IntegrationTestSuite) TestSecurity_RateLimiting() {
 					Params:  json.RawMessage(`{"message": "rate-limit-test"}`),
 					ID:      fmt.Sprintf("rate-limit-%d", j),
 				}
-				
+
 				response := suite.makeHTTPRequest(request)
 				results <- response.Error == nil
 			}
 		}()
 	}
-	
+
 	successCount := 0
 	for i := 0; i < numRequests; i++ {
 		if <-results {
 			successCount++
 		}
 	}
-	
+
 	// Most requests should succeed (server should handle reasonable load)
 	// This is more of a load test than a security test
 	assert.Greater(suite.T(), successCount, numRequests/2)
@@ -272,10 +272,10 @@ func (suite *IntegrationTestSuite) TestSecurity_InputSanitization() {
 			// The response should contain the echo field with the original input
 			result, ok := response.Result.(map[string]interface{})
 			require.True(suite.T(), ok)
-			
+
 			echo, ok := result["echo"].(map[string]interface{})
 			require.True(suite.T(), ok)
-			
+
 			// The message should be returned as-is (not executed)
 			assert.Equal(suite.T(), input, echo["message"])
 		})

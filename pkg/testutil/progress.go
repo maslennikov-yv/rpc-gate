@@ -20,7 +20,7 @@ const (
 	ColorCyan   = "\033[1;36m"
 	ColorWhite  = "\033[1;37m"
 	ColorGray   = "\033[0;37m"
-	
+
 	// Background colors
 	BgBlack   = "\033[40m"
 	BgRed     = "\033[41m"
@@ -101,10 +101,10 @@ func (p *ProgressReporter) Stop() {
 
 	close(p.stopChan)
 	<-p.doneChan
-	
+
 	// Print final status
 	elapsed := time.Since(p.startTime)
-	p.printNewLine(fmt.Sprintf("✓ %s%s%s: Completed in %s", 
+	p.printNewLine(fmt.Sprintf("✓ %s%s%s: Completed in %s",
 		ColorGreen, p.testName, ColorReset, formatDuration(elapsed)))
 }
 
@@ -114,14 +114,14 @@ func (p *ProgressReporter) Increment() {
 	defer p.mu.Unlock()
 	p.current++
 	p.lastUpdate = time.Now()
-	
+
 	// Print milestone updates
 	newPercent := int(float64(p.current) * 100 / float64(p.total))
-	if newPercent != p.lastPercent && newPercent % 10 == 0 {
+	if newPercent != p.lastPercent && newPercent%10 == 0 {
 		p.lastPercent = newPercent
 		if !p.quietMode {
 			p.clearLine()
-			fmt.Fprintf(p.writer, "%s⏳ %s: %d%% complete (%d/%d)%s\n", 
+			fmt.Fprintf(p.writer, "%s⏳ %s: %d%% complete (%d/%d)%s\n",
 				ColorYellow, p.testName, newPercent, p.current, p.total, ColorReset)
 		}
 	}
@@ -194,7 +194,7 @@ func (p *ProgressReporter) update() {
 	// В тихом режиме обновляем только каждые 5%
 	if p.quietMode {
 		newPercent := int(float64(p.current) * 100 / float64(p.total))
-		if newPercent == p.lastPercent || (newPercent % 5 != 0) {
+		if newPercent == p.lastPercent || (newPercent%5 != 0) {
 			return
 		}
 		p.lastPercent = newPercent
@@ -246,7 +246,7 @@ func (p *ProgressReporter) update() {
 	if p.quietMode {
 		// Simplified output for quiet mode
 		fmt.Fprintf(p.writer, "%s %s: %s%.1f%%%s [%d/%d] %s\r",
-			spinner, p.testName, ColorYellow, percent, ColorReset, 
+			spinner, p.testName, ColorYellow, percent, ColorReset,
 			p.current, p.total, etaStr)
 	} else {
 		// Full output
@@ -403,7 +403,7 @@ func (s *SectionReporter) Status(format string, args ...interface{}) {
 	if s.hideDetails || s.quietMode {
 		return
 	}
-	
+
 	msg := fmt.Sprintf(format, args...)
 	elapsed := time.Since(s.startTime)
 	fmt.Fprintf(s.writer, "%s  → %s %s(+%s)%s\n",
@@ -443,7 +443,7 @@ func (l *TestProgressLogger) Infof(format string, args ...interface{}) {
 	if l.hideDetails || l.quietMode {
 		return
 	}
-	
+
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintf(l.writer, "%s[INFO] %s: %s%s\n", ColorBlue, l.testName, msg, ColorReset)
 }
@@ -453,7 +453,7 @@ func (l *TestProgressLogger) Warnf(format string, args ...interface{}) {
 	if l.quietMode {
 		return
 	}
-	
+
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintf(l.writer, "%s[WARN] %s: %s%s\n", ColorYellow, l.testName, msg, ColorReset)
 }
@@ -470,7 +470,7 @@ func (l *TestProgressLogger) Successf(format string, args ...interface{}) {
 	if l.quietMode {
 		return
 	}
-	
+
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintf(l.writer, "%s[SUCCESS] %s: %s%s\n", ColorGreen, l.testName, msg, ColorReset)
 }
@@ -480,7 +480,7 @@ func (l *TestProgressLogger) Debugf(format string, args ...interface{}) {
 	if l.hideDetails || l.quietMode {
 		return
 	}
-	
+
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintf(l.writer, "%s[DEBUG] %s: %s%s\n", ColorGray, l.testName, msg, ColorReset)
 }
@@ -488,7 +488,7 @@ func (l *TestProgressLogger) Debugf(format string, args ...interface{}) {
 // FormatHeader formats a header for test output
 func FormatHeader(title string) string {
 	line := strings.Repeat("-", 80)
-	return fmt.Sprintf("%s%s%s\n%s%s%s\n%s%s%s\n", 
+	return fmt.Sprintf("%s%s%s\n%s%s%s\n%s%s%s\n",
 		ColorCyan, line, ColorReset,
 		ColorCyan, title, ColorReset,
 		ColorCyan, line, ColorReset)
@@ -533,10 +533,10 @@ func (p *ProgressReporter) SetSuppressDetails(suppress bool) {
 func (p *ProgressReporter) UpdateProgress(current, total int, message string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.current = current
 	p.total = total
-	
+
 	if p.hideRequests {
 		// For mass operations, show only a dynamic progress line
 		p.updateProgressLine(message)
@@ -549,17 +549,17 @@ func (p *ProgressReporter) UpdateProgress(current, total int, message string) {
 // updateProgressLine shows a single-line progress indicator
 func (p *ProgressReporter) updateProgressLine(customMessage string) {
 	p.clearLine()
-	
+
 	// Calculate progress percentage
 	var percent float64
 	if p.total > 0 {
 		percent = float64(p.current) * 100 / float64(p.total)
 	}
-	
+
 	// Calculate elapsed time
 	elapsed := time.Since(p.startTime)
 	elapsedStr := formatDuration(elapsed)
-	
+
 	// Calculate ETA
 	var etaStr string
 	if p.current > 0 && p.total > 0 && p.current < p.total {
@@ -570,14 +570,14 @@ func (p *ProgressReporter) updateProgressLine(customMessage string) {
 	} else {
 		etaStr = "calculating..."
 	}
-	
+
 	// Create a compact progress bar
 	const barWidth = 20
 	completedWidth := int(float64(barWidth) * float64(p.current) / float64(p.total))
 	if completedWidth > barWidth {
 		completedWidth = barWidth
 	}
-	
+
 	bar := "["
 	for i := 0; i < barWidth; i++ {
 		if i < completedWidth {
@@ -587,11 +587,11 @@ func (p *ProgressReporter) updateProgressLine(customMessage string) {
 		}
 	}
 	bar += "]"
-	
+
 	// Show spinner for active operations
 	spinner := p.spinnerStates[p.spinnerIndex]
 	p.spinnerIndex = (p.spinnerIndex + 1) % len(p.spinnerStates)
-	
+
 	// Format the progress line
 	if customMessage != "" {
 		fmt.Fprintf(p.writer, "%s %s %s%s%s %s%.1f%%%s [%s%d/%d%s] %s%s%s | %s%s%s\r",
@@ -620,10 +620,10 @@ func (p *ProgressReporter) updateProgressLine(customMessage string) {
 func (p *ProgressReporter) FinishProgress(successCount, errorCount int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.clearLine()
 	elapsed := time.Since(p.startTime)
-	
+
 	if errorCount == 0 {
 		fmt.Fprintf(p.writer, "%s✓ %s%s%s: %s%d%s requests completed successfully in %s%s%s\n",
 			ColorGreen,

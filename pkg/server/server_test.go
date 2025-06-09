@@ -314,38 +314,38 @@ func TestServer_handleHTTPRequest_Notification(t *testing.T) {
 		Format:      middleware.LogFormatJSON,
 		Level:       middleware.LogLevelInfo,
 	}
-	
+
 	// Создаем логгер
 	logger, err := middleware.NewLogger(logConfig)
 	require.NoError(t, err)
-	
+
 	// Создаем сервер с правильной конфигурацией
 	server := NewServer(Config{
 		ServiceName: "integration-test-server",
 		Version:     "test-1.0.0",
 	}, logger)
-	
+
 	// Создаем запрос-уведомление (без ID)
 	requestBody := `{"jsonrpc":"2.0","method":"echo","params":{"message":"test notification"}}`
-	
+
 	// Создаем HTTP запрос
 	req := httptest.NewRequest("POST", "/rpc", strings.NewReader(requestBody))
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	// Создаем ResponseRecorder для записи ответа
 	w := httptest.NewRecorder()
-	
+
 	// Обрабатываем запрос
 	server.handleHTTPRequest(w, req)
-	
+
 	// Проверяем, что статус ответа 200 OK
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	// Проверяем, что тело ответа пустое (для уведомлений не должно быть ответа)
 	responseBody := w.Body.String()
 	t.Logf("Response body content: %q (length: %d)", responseBody, len(responseBody))
 	t.Logf("Response body bytes: %v", w.Body.Bytes())
-	
+
 	// Проверяем, что тело ответа действительно пустое
 	assert.Equal(t, "", responseBody, "Response body should be completely empty for notifications")
 	assert.Equal(t, 0, w.Body.Len(), "Response body length should be 0 for notifications")
@@ -432,9 +432,9 @@ func TestConfig_Validation(t *testing.T) {
 			valid: true,
 		},
 		{
-			name: "Empty config",
+			name:   "Empty config",
 			config: Config{},
-			valid: true, // Should work with defaults
+			valid:  true, // Should work with defaults
 		},
 	}
 
@@ -448,7 +448,7 @@ func TestConfig_Validation(t *testing.T) {
 			}
 			logger, err := middleware.NewLogger(logConfig)
 			require.NoError(t, err)
-			
+
 			server := NewServer(tt.config, logger)
 
 			if tt.valid {

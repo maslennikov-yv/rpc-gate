@@ -262,7 +262,7 @@ func (suite *IntegrationTestSuite) TestComprehensive_ConcurrentHandling() {
 func (suite *IntegrationTestSuite) TestComprehensive_MiddlewareChaining() {
 	// Test that middleware is properly applied by checking logging behavior
 	// and request processing order
-	
+
 	request := types.JSONRPCRequest{
 		JSONRPC: "2.0",
 		Method:  "echo",
@@ -271,16 +271,16 @@ func (suite *IntegrationTestSuite) TestComprehensive_MiddlewareChaining() {
 	}
 
 	response := suite.makeHTTPRequest(request)
-	
+
 	// Verify the request was processed through middleware
 	assert.NotNil(suite.T(), response)
 	assert.Nil(suite.T(), response.Error)
 	assert.NotNil(suite.T(), response.Result)
-	
+
 	// The response should contain the echoed message
 	result, ok := response.Result.(map[string]interface{})
 	require.True(suite.T(), ok)
-	
+
 	echo, ok := result["echo"].(map[string]interface{})
 	require.True(suite.T(), ok)
 	assert.Equal(suite.T(), "middleware test", echo["message"])
@@ -337,15 +337,15 @@ func (suite *IntegrationTestSuite) TestComprehensive_ErrorHandlingAndRecovery() 
 		suite.Run(scenario.name, func() {
 			// For parse errors, we need to send malformed JSON directly
 			if scenario.name == "Parse Error" {
-				resp, err := suite.httpClient.Post(suite.env.BaseURL+"/rpc", "application/json", 
+				resp, err := suite.httpClient.Post(suite.env.BaseURL+"/rpc", "application/json",
 					bytes.NewBufferString(`{"jsonrpc": "2.0", "method": "echo", "params": {invalid json}, "id": "parse-error"}`))
 				require.NoError(suite.T(), err)
 				defer resp.Body.Close()
-				
+
 				var response types.JSONRPCResponse
 				err = json.NewDecoder(resp.Body).Decode(&response)
 				require.NoError(suite.T(), err)
-				
+
 				assert.NotNil(suite.T(), response.Error)
 				assert.Equal(suite.T(), scenario.expected, response.Error.Code)
 			} else {
@@ -401,7 +401,7 @@ func (suite *IntegrationTestSuite) TestComprehensive_ResourceManagement() {
 	// Test connection limits and cleanup
 	const maxConnections = 20
 	var connections []net.Conn
-	
+
 	// Open multiple TCP connections
 	for i := 0; i < maxConnections; i++ {
 		conn, err := net.Dial("tcp", suite.env.TCPAddr)
@@ -442,7 +442,7 @@ func (suite *IntegrationTestSuite) TestComprehensive_ResourceManagement() {
 // Helper method for HTTPS requests
 func (suite *IntegrationTestSuite) makeHTTPSRequest(request types.JSONRPCRequest) *types.JSONRPCResponse {
 	httpsURL := suite.env.HTTPSUrl
-	
+
 	jsonData, err := json.Marshal(request)
 	require.NoError(suite.T(), err)
 
@@ -464,7 +464,7 @@ func (suite *IntegrationTestSuite) makeHTTPSRequest(request types.JSONRPCRequest
 // Helper method for TLS requests
 func (suite *IntegrationTestSuite) makeTLSRequest(request types.JSONRPCRequest) *types.JSONRPCResponse {
 	tlsAddr := suite.env.TLSAddr
-	
+
 	conn, err := tls.Dial("tcp", tlsAddr, &tls.Config{
 		InsecureSkipVerify: true,
 	})

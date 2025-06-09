@@ -84,48 +84,48 @@ func (suite *DockerPerformanceTestSuite) checkDockerAvailability() bool {
 
 // TestDocker_ContainerPerformance tests container performance
 func (suite *DockerPerformanceTestSuite) TestDocker_ContainerPerformance() {
-    if !suite.dockerAvailable {
-        suite.T().Skip("Docker not available")
-        return
-    }
+	if !suite.dockerAvailable {
+		suite.T().Skip("Docker not available")
+		return
+	}
 
-    // Для этого теста НЕ включаем тихий режим
-    localQuietMode := false
+	// Для этого теста НЕ включаем тихий режим
+	localQuietMode := false
 
-    section := testutil.NewSectionReporter("Docker Container Performance Test")
-    section.SetQuietMode(localQuietMode)
-    section.Start()
+	section := testutil.NewSectionReporter("Docker Container Performance Test")
+	section.SetQuietMode(localQuietMode)
+	section.Start()
 
-    section.Status("Starting Docker performance test...")
-    
-    // Simulate Docker container performance test
-    time.Sleep(2 * time.Second)
-    
-    section.Status("Docker performance test completed")
-    section.End()
+	section.Status("Starting Docker performance test...")
+
+	// Simulate Docker container performance test
+	time.Sleep(2 * time.Second)
+
+	section.Status("Docker performance test completed")
+	section.End()
 }
 
 // TestDocker_NetworkLatency tests network latency in containers
 func (suite *DockerPerformanceTestSuite) TestDocker_NetworkLatency() {
-    if !suite.dockerAvailable {
-        suite.T().Skip("Docker not available")
-        return
-    }
+	if !suite.dockerAvailable {
+		suite.T().Skip("Docker not available")
+		return
+	}
 
-    // Для этого теста НЕ включаем тихий режим
-    localQuietMode := false
+	// Для этого теста НЕ включаем тихий режим
+	localQuietMode := false
 
-    section := testutil.NewSectionReporter("Docker Network Latency Test")
-    section.SetQuietMode(localQuietMode)
-    section.Start()
+	section := testutil.NewSectionReporter("Docker Network Latency Test")
+	section.SetQuietMode(localQuietMode)
+	section.Start()
 
-    section.Status("Testing network latency...")
-    
-    // Simulate network latency test
-    time.Sleep(1 * time.Second)
-    
-    section.Status("Network latency test completed")
-    section.End()
+	section.Status("Testing network latency...")
+
+	// Simulate network latency test
+	time.Sleep(1 * time.Second)
+
+	section.Status("Network latency test completed")
+	section.End()
 }
 
 // Run the Docker performance test suite

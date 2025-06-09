@@ -245,7 +245,7 @@ func TestRPCError_StandardErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.errorFunc(tt.data)
-			
+
 			assert.NotNil(t, err)
 			assert.Equal(t, tt.expectedCode, err.Code)
 			assert.NotEmpty(t, err.Message)
@@ -312,15 +312,15 @@ func TestRequestContext_WithValue(t *testing.T) {
 	value1, exists1 := ctx.GetValue("key1")
 	assert.True(t, exists1)
 	assert.Equal(t, "value1", value1)
-	
+
 	value2, exists2 := ctx.GetValue("key2")
 	assert.True(t, exists2)
 	assert.Equal(t, 123, value2)
-	
+
 	value3, exists3 := ctx.GetValue("key3")
 	assert.True(t, exists3)
 	assert.Equal(t, map[string]interface{}{"nested": "value"}, value3)
-	
+
 	_, exists := ctx.GetValue("nonexistent")
 	assert.False(t, exists)
 }

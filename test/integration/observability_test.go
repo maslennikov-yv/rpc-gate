@@ -92,7 +92,7 @@ func (suite *IntegrationTestSuite) TestObservability_ConcurrentRequestTracing() 
 
 	// Validate performance and success rate
 	assert.Equal(suite.T(), numRequests, successCount, "All requests should succeed")
-	
+
 	avgDuration := totalDuration / time.Duration(numRequests)
 	assert.Less(suite.T(), avgDuration, 2*time.Second, "Average response time should be reasonable")
 	assert.Less(suite.T(), maxDuration, 5*time.Second, "Max response time should be reasonable")
@@ -205,7 +205,7 @@ func (suite *IntegrationTestSuite) TestObservability_PerformanceMetrics() {
 			assert.Nil(suite.T(), response.Error)
 
 			// Verify performance is within expected bounds
-			assert.Less(suite.T(), duration, handler.expected*5, 
+			assert.Less(suite.T(), duration, handler.expected*5,
 				"Handler %s took too long: %v", handler.method, duration)
 		})
 	}
@@ -259,7 +259,7 @@ func (suite *IntegrationTestSuite) TestObservability_ProtocolMetrics() {
 			assert.Equal(suite.T(), "protocol-metrics", response.ID)
 
 			// Verify reasonable performance
-			assert.Less(suite.T(), duration, 2*time.Second, 
+			assert.Less(suite.T(), duration, 2*time.Second,
 				"Protocol %s should respond quickly", protocol.name)
 
 			// Verify response contains time data

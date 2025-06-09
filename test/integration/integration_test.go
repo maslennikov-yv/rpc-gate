@@ -105,13 +105,13 @@ func getEnvOrDefault(key, defaultValue string) string {
 // IntegrationTestSuite provides a test suite for integration tests
 type IntegrationTestSuite struct {
 	suite.Suite
-	env           *TestEnvironment
-	server        *server.Server
-	config        server.Config
-	logger        *middleware.Logger
-	httpClient    *http.Client
-	mu            sync.Mutex
-	progressGroup *testutil.ProgressGroup
+	env            *TestEnvironment
+	server         *server.Server
+	config         server.Config
+	logger         *middleware.Logger
+	httpClient     *http.Client
+	mu             sync.Mutex
+	progressGroup  *testutil.ProgressGroup
 	allocatedPorts []int
 }
 
@@ -185,25 +185,25 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 // setupDockerEnvironment configures the test suite for Docker environment
 func (suite *IntegrationTestSuite) setupDockerEnvironment(section *testutil.SectionReporter) {
 	section.Status("Configuring Docker environment")
-	
+
 	// Wait for services to be ready with extended timeout for Docker
 	section.Status("Waiting for Docker services to be ready...")
 	suite.waitForDockerServices(section)
-	
+
 	section.Status("Docker services are ready")
 }
 
 // setupLocalEnvironment configures the test suite for local development
 func (suite *IntegrationTestSuite) setupLocalEnvironment(section *testutil.SectionReporter) {
 	section.Status("Configuring local development environment")
-	
+
 	// Allocate ports using the optimized port manager
 	section.Status("Allocating ports for local server")
 	ports, err := GetTestPortRange(6)
 	require.NoError(suite.T(), err, "Failed to allocate ports for test server")
 	suite.allocatedPorts = ports
-	
-	section.Status("Allocated ports: HTTP=%d, HTTPS=%d, TCP=%d, TLS=%d, WS=%d, WSS=%d", 
+
+	section.Status("Allocated ports: HTTP=%d, HTTPS=%d, TCP=%d, TLS=%d, WS=%d, WSS=%d",
 		ports[0], ports[1], ports[2], ports[3], ports[4], ports[5])
 
 	// Generate TLS config for local testing
@@ -236,7 +236,7 @@ func (suite *IntegrationTestSuite) setupLocalEnvironment(section *testutil.Secti
 	section.Status("Creating and starting local server")
 	suite.server = server.NewServer(suite.config, suite.logger)
 	suite.registerTestHandlers()
-	
+
 	err = suite.server.Start()
 	require.NoError(suite.T(), err)
 
@@ -261,7 +261,7 @@ func (suite *IntegrationTestSuite) waitForDockerServices(section *testutil.Secti
 
 	for _, service := range services {
 		section.Status("Checking %s availability...", service.name)
-		
+
 		for time.Now().Before(timeout) {
 			resp, err := suite.httpClient.Get(service.url)
 			if err == nil {
@@ -269,12 +269,12 @@ func (suite *IntegrationTestSuite) waitForDockerServices(section *testutil.Secti
 				section.Status("✅ %s is ready", service.name)
 				break
 			}
-			
+
 			if time.Now().Add(checkInterval).After(timeout) {
-				suite.T().Fatalf("❌ %s failed to become ready within %v. Last error: %v", 
+				suite.T().Fatalf("❌ %s failed to become ready within %v. Last error: %v",
 					service.name, maxWait, err)
 			}
-			
+
 			time.Sleep(checkInterval)
 		}
 	}
@@ -294,7 +294,7 @@ func (suite *IntegrationTestSuite) waitForServerReady(url string, timeout time.D
 				},
 			},
 		}
-		
+
 		resp, err := client.Get(url)
 		if err == nil {
 			resp.Body.Close()
@@ -332,12 +332,12 @@ func (suite *IntegrationTestSuite) generateTestTLSConfig() *tls.Config {
 			StreetAddress: []string{""},
 			PostalCode:    []string{""},
 		},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
-		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
-		DNSNames:     []string{"localhost"},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(365 * 24 * time.Hour),
+		KeyUsage:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		DNSNames:    []string{"localhost"},
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
@@ -375,7 +375,7 @@ func (suite *IntegrationTestSuite) TearDownSuite() {
 		section.Status("Docker Compose will handle service cleanup")
 	} else {
 		section.Status("🖥️  Local environment - performing cleanup")
-		
+
 		if suite.server != nil {
 			section.Status("Stopping local server")
 			done := make(chan error, 1)
@@ -402,7 +402,7 @@ func (suite *IntegrationTestSuite) TearDownSuite() {
 				ReleaseTestPort(port)
 			}
 			suite.allocatedPorts = nil
-			
+
 			stats := GetPortStats()
 			section.Status("Final port utilization: %.1f%%", stats["utilization_pct"])
 		}
@@ -780,10 +780,10 @@ func (suite *IntegrationTestSuite) TestHTTP_ConcurrentRequests() {
 			} else {
 				errorCount++
 			}
-			
+
 			progressReporter.UpdateProgress(completed, totalRequests,
 				fmt.Sprintf("Worker progress: ✓ %d success, ✗ %d errors", successCount, errorCount))
-			
+
 			if completed >= totalRequests {
 				break
 			}
@@ -909,7 +909,7 @@ func TestIntegrationSuite(t *testing.T) {
 
 	// Detect environment and show information
 	env := DetectTestEnvironment()
-	
+
 	if !env.QuietMode {
 		fmt.Printf("🔍 Environment Detection:\n")
 		if env.IsDocker {
@@ -918,10 +918,10 @@ func TestIntegrationSuite(t *testing.T) {
 		} else {
 			fmt.Printf("   🖥️  Local development environment detected\n")
 			fmt.Printf("   🔧 Using optimized port allocation\n")
-			
+
 			// Show port information for local development
 			stats := GetPortStats()
-			fmt.Printf("   📊 Port pool: %s (size: %v)\n", 
+			fmt.Printf("   📊 Port pool: %s (size: %v)\n",
 				stats["port_range"], stats["pool_size"])
 		}
 		fmt.Printf("   🤫 Tip: Set QUIET_TESTS=1 for minimal output\n")

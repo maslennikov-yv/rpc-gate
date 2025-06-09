@@ -31,10 +31,10 @@ type JSONRPCRequest struct {
 
 // JSONRPCResponse представляет JSON-RPC ответ
 type JSONRPCResponse struct {
-	JSONRPC string      `json:"jsonrpc"`
-	Result  interface{} `json:"result,omitempty"`
+	JSONRPC string        `json:"jsonrpc"`
+	Result  interface{}   `json:"result,omitempty"`
 	Error   *JSONRPCError `json:"error,omitempty"`
-	ID      interface{} `json:"id"`
+	ID      interface{}   `json:"id"`
 }
 
 // JSONRPCError представляет ошибку JSON-RPC
@@ -71,13 +71,13 @@ type HistoryManager struct {
 func NewHistoryManager() *HistoryManager {
 	homeDir, _ := os.UserHomeDir()
 	historyFile := filepath.Join(homeDir, ".jsonrpc_client_history")
-	
+
 	hm := &HistoryManager{
 		historyFile: historyFile,
 		commands:    make([]string, 0),
 		maxSize:     1000, // Максимум 1000 команд в истории
 	}
-	
+
 	hm.loadHistory()
 	return hm
 }
@@ -135,7 +135,7 @@ func (hm *HistoryManager) addCommand(command string) {
 	}
 
 	hm.commands = append(hm.commands, command)
-	
+
 	// Ограничиваем размер истории
 	if len(hm.commands) > hm.maxSize {
 		hm.commands = hm.commands[1:]
@@ -156,7 +156,7 @@ type CommandCompleter struct {
 func NewCommandCompleter() *CommandCompleter {
 	return &CommandCompleter{
 		commands: []string{
-			"echo", "calc", "calculate", "status", "time", "notify", "raw", 
+			"echo", "calc", "calculate", "status", "time", "notify", "raw",
 			"debug", "help", "quit", "exit", "history", "clear",
 		},
 	}
@@ -166,14 +166,14 @@ func NewCommandCompleter() *CommandCompleter {
 func (cc *CommandCompleter) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	lineStr := string(line)
 	fields := strings.Fields(lineStr)
-	
+
 	if len(fields) == 0 || (len(fields) == 1 && pos == len(line)) {
 		// Автодополнение команд
 		prefix := ""
 		if len(fields) == 1 {
 			prefix = fields[0]
 		}
-		
+
 		var suggestions [][]rune
 		for _, cmd := range cc.commands {
 			if strings.HasPrefix(cmd, prefix) {
@@ -182,7 +182,7 @@ func (cc *CommandCompleter) Do(line []rune, pos int) (newLine [][]rune, length i
 		}
 		return suggestions, len(prefix)
 	}
-	
+
 	return nil, 0
 }
 
@@ -230,7 +230,7 @@ func (c *Client) sendHTTPRequest(req *JSONRPCRequest) (*JSONRPCResponse, error) 
 	}
 
 	url := fmt.Sprintf("%s://%s:%d/rpc", scheme, c.config.Host, c.config.Port)
-	
+
 	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -318,7 +318,7 @@ func (c *Client) sendWebSocketRequest(req *JSONRPCRequest) (*JSONRPCResponse, er
 // sendTCPRequest отправляет TCP запрос
 func (c *Client) sendTCPRequest(req *JSONRPCRequest) (*JSONRPCResponse, error) {
 	address := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
-	
+
 	if c.config.Debug {
 		fmt.Printf("🔍 DEBUG TCP Address: %s\n", address)
 	}
@@ -467,12 +467,12 @@ func processCommand(line string, requestID *int) (*JSONRPCRequest, bool, string)
 			return nil, false, ""
 		}
 		message := strings.Join(parts[1:], " ")
-		
+
 		// Убираем кавычки если они есть
 		if strings.HasPrefix(message, "\"") && strings.HasSuffix(message, "\"") {
 			message = strings.Trim(message, "\"")
 		}
-		
+
 		req := makeRequest("echo", map[string]interface{}{
 			"message":   message,
 			"timestamp": time.Now().Unix(),
@@ -598,11 +598,11 @@ func runInteractiveMode(client *Client) {
 	// Настраиваем readline
 	completer := NewCommandCompleter()
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          "jsonrpc> ",
-		HistoryFile:     history.historyFile,
-		AutoComplete:    completer,
-		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
+		Prompt:            "jsonrpc> ",
+		HistoryFile:       history.historyFile,
+		AutoComplete:      completer,
+		InterruptPrompt:   "^C",
+		EOFPrompt:         "exit",
 		HistorySearchFold: true,
 	})
 	if err != nil {
@@ -673,7 +673,7 @@ func runInteractiveMode(client *Client) {
 		// Отправляем запрос если нужно
 		if shouldSend && req != nil {
 			fmt.Printf("📤 Sending: %s\n", req.Method)
-			
+
 			// Переключаем режим отладки если команда содержит debug
 			if strings.Contains(line, "debug") {
 				client.config.Debug = !client.config.Debug
@@ -691,13 +691,13 @@ func runInteractiveMode(client *Client) {
 // runBenchmark запускает бенчмарк
 func runBenchmark(client *Client, requests int, concurrent int) {
 	fmt.Printf("🏃 Running benchmark: %d requests with %d concurrent workers\n", requests, concurrent)
-	
+
 	start := time.Now()
-	
+
 	// Канал для задач
 	jobs := make(chan int, requests)
 	results := make(chan error, requests)
-	
+
 	// Запускаем воркеры
 	for w := 0; w < concurrent; w++ {
 		go func() {
@@ -708,13 +708,13 @@ func runBenchmark(client *Client, requests int, concurrent int) {
 			}
 		}()
 	}
-	
+
 	// Отправляем задачи
 	for i := 0; i < requests; i++ {
 		jobs <- i
 	}
 	close(jobs)
-	
+
 	// Собираем результаты
 	var errors int
 	for i := 0; i < requests; i++ {
@@ -722,10 +722,10 @@ func runBenchmark(client *Client, requests int, concurrent int) {
 			errors++
 		}
 	}
-	
+
 	duration := time.Since(start)
 	rps := float64(requests) / duration.Seconds()
-	
+
 	fmt.Printf("📊 Benchmark Results:\n")
 	fmt.Printf("   Total requests: %d\n", requests)
 	fmt.Printf("   Successful: %d\n", requests-errors)
@@ -747,19 +747,19 @@ func isFlagSet(name string) bool {
 
 func main() {
 	var (
-		protocol   = flag.String("protocol", "http", "Protocol to use (http, https, ws, wss, tcp, tls)")
-		host       = flag.String("host", "localhost", "Server host")
-		port       = flag.Int("port", 8080, "Server port")
-		useTLS     = flag.Bool("tls", false, "Use TLS/SSL")
-		timeout    = flag.Duration("timeout", 30*time.Second, "Request timeout")
-		method     = flag.String("method", "", "Method to call")
-		params     = flag.String("params", "", "Parameters (JSON)")
-		id         = flag.String("id", "", "Request ID (empty for notification)")
+		protocol    = flag.String("protocol", "http", "Protocol to use (http, https, ws, wss, tcp, tls)")
+		host        = flag.String("host", "localhost", "Server host")
+		port        = flag.Int("port", 8080, "Server port")
+		useTLS      = flag.Bool("tls", false, "Use TLS/SSL")
+		timeout     = flag.Duration("timeout", 30*time.Second, "Request timeout")
+		method      = flag.String("method", "", "Method to call")
+		params      = flag.String("params", "", "Parameters (JSON)")
+		id          = flag.String("id", "", "Request ID (empty for notification)")
 		interactive = flag.Bool("interactive", true, "Run in interactive mode (default)")
-		benchmark  = flag.Bool("benchmark", false, "Run benchmark")
-		requests   = flag.Int("requests", 1000, "Number of requests for benchmark")
-		concurrent = flag.Int("concurrent", 10, "Number of concurrent workers for benchmark")
-		debug      = flag.Bool("debug", false, "Enable debug mode")
+		benchmark   = flag.Bool("benchmark", false, "Run benchmark")
+		requests    = flag.Int("requests", 1000, "Number of requests for benchmark")
+		concurrent  = flag.Int("concurrent", 10, "Number of concurrent workers for benchmark")
+		debug       = flag.Bool("debug", false, "Enable debug mode")
 	)
 	flag.Parse()
 

@@ -50,7 +50,7 @@ type Config struct {
 type ProcessingContext struct {
 	Transport      string
 	RemoteAddr     string
-	HTTPRequest  *http.Request
+	HTTPRequest    *http.Request
 	ServiceName    string
 	ServiceVersion string
 	Headers        http.Header
@@ -194,7 +194,7 @@ func (s *Server) handleHTTPRequest(w http.ResponseWriter, r *http.Request) {
 			Error:   types.NewInvalidRequestError("Request body cannot be empty"),
 			ID:      nil,
 		}
-		
+
 		responseJSON, _ := json.Marshal(invalidRequestError)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

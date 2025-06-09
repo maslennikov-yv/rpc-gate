@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"streaming-server/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"streaming-server/pkg/types"
 )
 
 // MockLogWriter - это мок-реализация LogWriter для тестирования
@@ -68,9 +68,9 @@ func TestNewKafkaLogWriter(t *testing.T) {
 		{
 			name: "валидная конфигурация",
 			config: LoggingConfig{
-				KafkaBrokers: []string{"localhost:9092"},
-				Topic:        "test-topic",
-				BufferSize:   100,
+				KafkaBrokers:  []string{"localhost:9092"},
+				Topic:         "test-topic",
+				BufferSize:    100,
 				FlushInterval: time.Second,
 			},
 			expectError: false,
@@ -146,12 +146,12 @@ func TestStdoutLogWriter(t *testing.T) {
 
 func TestLogger_shouldLog(t *testing.T) {
 	tests := []struct {
-		name       string
-		config     LoggingConfig
-		req        *types.JSONRPCRequest
-		success    bool
-		hasError   bool
-		shouldLog  bool
+		name      string
+		config    LoggingConfig
+		req       *types.JSONRPCRequest
+		success   bool
+		hasError  bool
+		shouldLog bool
 	}{
 		{
 			name: "отключенный логгер",

@@ -4,22 +4,22 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	
+
 	"streaming-server/pkg/middleware"
 	"streaming-server/pkg/types"
 )
 
 // Dispatcher обрабатывает JSON-RPC запросы и направляет их к соответствующим обработчикам
 type Dispatcher struct {
-	handlers       map[string]types.Handler
+	handlers        map[string]types.Handler
 	middlewareChain *middleware.Chain
-	mu             sync.RWMutex
+	mu              sync.RWMutex
 }
 
 // NewDispatcher создает новый экземпляр диспетчера
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
-		handlers:       make(map[string]types.Handler),
+		handlers:        make(map[string]types.Handler),
 		middlewareChain: middleware.NewChain(),
 	}
 }
@@ -49,7 +49,7 @@ func (d *Dispatcher) Dispatch(request *types.JSONRPCRequest, ctx *types.RequestC
 	if request == nil {
 		return nil, errors.New("request cannot be nil")
 	}
-	
+
 	// Проверяем, что контекст не nil
 	if ctx == nil {
 		return nil, errors.New("context cannot be nil")
@@ -76,12 +76,12 @@ func (d *Dispatcher) Dispatch(request *types.JSONRPCRequest, ctx *types.RequestC
 func (d *Dispatcher) GetRegisteredMethods() []string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	
+
 	methods := make([]string, 0, len(d.handlers))
 	for method := range d.handlers {
 		methods = append(methods, method)
 	}
-	
+
 	return methods
 }
 
