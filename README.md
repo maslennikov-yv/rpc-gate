@@ -53,7 +53,7 @@ The `RequestContext` provides:
 
 ### Installation
 
-\\\`bash
+```bash
 git clone <repository-url>
 cd streaming-server
 go mod download
